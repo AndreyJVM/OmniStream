@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "FINANCIAL",
+        "SYSTEM_LOG",
+        "IOT_TELEMETRY",
+        "UNKNOWN"
+      ]
+    },
+    "sentiment_score": {
+      "type": "number"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "actionable_entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "value"
+        ]
+      }
+    }
+  },
+  "required": [
+    "summary",
+    "category",
+    "sentiment_score",
+    "risk_level",
+    "actionable_entities"
+  ],
+  "additionalProperties": false
+}

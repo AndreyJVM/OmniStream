@@ -1,0 +1,53 @@
+spring:
+  application.name: omnistream-ai
+  profiles.default: prod
+  threads.virtual.enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/omnistream}
+    username: ${DB_USER:omnistream}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        max.block.ms: 5000
+        request.timeout.ms: 5000
+        delivery.timeout.ms: 12000
+    consumer:
+      group-id: omnistream-processing-group
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      max-poll-records: 1
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  error.include-message: never
+management:
+  endpoints.web.exposure.include: health,metrics
+  endpoint.health:
+    probes.enabled: true
+    group.readiness.include: readinessState,db,kafka
+    show-details: never
+omnistream:
+  api-key: ${API_KEY}
+  parser-mode: ${PARSER_MODE:groq}
+  groq-key: ${GROQ_API_KEY:}
+  groq-model: ${GROQ_MODEL:openai/gpt-oss-120b}
+  openai-key: ${OPENAI_API_KEY:}
+  openai-model: ${OPENAI_MODEL:gpt-4o-mini}
+  replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
+  relay-delay-ms: 150
+springdoc.swagger-ui.path: /swagger-ui.html

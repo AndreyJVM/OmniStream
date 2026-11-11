@@ -1,0 +1,3 @@
+omnistream:
+  api-key: ${API_KEY:omni-local-development}
+spring.datasource.password: ${DB_PASSWORD:omnistream-local}

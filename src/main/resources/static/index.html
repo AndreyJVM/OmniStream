@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#10251b" />
+    <meta
+      name="description"
+      content="Omnistream turns webhooks and document text into searchable events with summaries, risk levels, and extracted entities."
+    />
+    <title>Omnistream · Event intelligence</title>
+    <link rel="icon" href="/mark.svg" />
+    <link rel="stylesheet" href="/landing.css" />
+    <script defer src="/landing.js"></script>
+  </head>
+  <body>
+    <div class="mast">
+      <canvas id="signal-art" aria-hidden="true"></canvas>
+      <header class="top wrap">
+        <a class="brand" href="/" aria-label="Omnistream home"
+          ><img src="/mark.svg" alt="" />Omnistream</a
+        >
+        <nav aria-label="Primary navigation">
+          <a class="nav-info" href="#how">How it works</a>
+          <a class="nav-info" href="/workspace#help">Guide</a>
+          <a class="top-action" href="/workspace"
+            >Open workspace <span aria-hidden="true">↗</span></a
+          >
+        </nav>
+      </header>
+      <main class="intro wrap">
+        <div class="pitch">
+          <h1>Turn raw events into <em>clear signals.</em></h1>
+          <p>
+            Give your webhooks and documents a place to land. Follow each event
+            from intake to a summary, risk assessment, and the details that
+            matter.
+          </p>
+          <div class="actions">
+            <a class="primary" href="/workspace"
+              >Enter workspace <span aria-hidden="true">→</span></a
+            >
+            <a class="quiet" href="/workspace#help">Read the guide</a>
+          </div>
+        </div>
+        <section class="specimen" aria-labelledby="example-title">
+          <div class="spec-head">
+            <span class="signal-dot" aria-hidden="true"></span>
+            <h2 id="example-title">Example analysis</h2>
+          </div>
+          <div class="options" role="group" aria-label="Choose an example">
+            <button data-example="invoice" aria-pressed="true">Invoice</button>
+            <button data-example="system" aria-pressed="false">
+              System log
+            </button>
+            <button data-example="sensor" aria-pressed="false">
+              Telemetry
+            </button>
+          </div>
+          <div id="example" aria-live="polite">
+            <h3>Incoming text</h3>
+            <blockquote id="payload">
+              “Invoice INV-42 for USD 85.00 is overdue.”
+            </blockquote>
+            <div class="divider"></div>
+            <h3>Extracted fields</h3>
+            <dl>
+              <dt>Category</dt>
+              <dd id="category">Financial</dd>
+              <dt id="field1">Invoice ID</dt>
+              <dd id="value1">INV-42</dd>
+              <dt id="field2">Amount</dt>
+              <dd id="value2">USD 85.00</dd>
+            </dl>
+          </div>
+        </section>
+      </main>
+    </div>
+    <section id="how" class="how wrap" aria-labelledby="how-title">
+      <div class="how-title">
+        <h2 id="how-title">How it works</h2>
+        <a href="/workspace#help"
+          >Try a guided example <span aria-hidden="true">↗</span></a
+        >
+      </div>
+      <div class="steps">
+        <article>
+          <span class="step-icon" aria-hidden="true">↓</span>
+          <h3>Capture the event</h3>
+          <p>
+            Paste a payload, load a text file, or send a webhook. Each
+            submission gets an ID you can follow.
+          </p>
+        </article>
+        <article>
+          <span class="step-icon" aria-hidden="true">≈</span>
+          <h3>Watch it process</h3>
+          <p>
+            Open the event stream to see what is waiting, what is being
+            analyzed, and what has completed.
+          </p>
+        </article>
+        <article>
+          <span class="step-icon" aria-hidden="true">≡</span>
+          <h3>Inspect the result</h3>
+          <p>
+            Compare the extracted fields with the original text. Review the
+            category, sentiment, and risk in one place.
+          </p>
+        </article>
+      </div>
+    </section>
+    <footer class="wrap">
+      <a class="foot-brand" href="/">Omnistream</a
+      ><a href="/swagger-ui.html">API reference ↗</a>
+    </footer>
+  </body>
+</html>

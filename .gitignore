@@ -1,0 +1,12 @@
+target/
+.env
+.idea/
+*.iml
+*.log
+Omnistream-data/
+*.credential
+*.jar
+*.zip
+dist/
+.netlify/
+.vercel/

@@ -1,0 +1,5 @@
+spring:
+  autoconfigure.exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  datasource.hikari.maximum-pool-size: 6
+management.endpoint.health.group.readiness.include: readinessState,db
+omnistream.relay-delay-ms: 500

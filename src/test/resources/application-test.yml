@@ -1,0 +1,5 @@
+omnistream:
+  api-key: integration-test-key
+  parser-mode: local
+  relay-delay-ms: 50
+spring.kafka.listener.auto-startup: false

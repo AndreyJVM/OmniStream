@@ -1,0 +1,35 @@
+{
+  "name": "Omnistream AI",
+  "description": "An event ingestion workspace with Groq analysis and a durable PostgreSQL queue.",
+  "stack": "heroku-24",
+  "success_url": "/",
+  "buildpacks": [
+    {
+      "url": "heroku/java"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    }
+  ],
+  "env": {
+    "SPRING_PROFILES_ACTIVE": {
+      "value": "hosted"
+    },
+    "GROQ_API_KEY": {
+      "description": "Your server-side Groq Cloud key for document analysis.",
+      "required": true
+    },
+    "API_KEY": {
+      "description": "Service key used by the private workspace and event API.",
+      "generator": "secret"
+    }
+  }
+}

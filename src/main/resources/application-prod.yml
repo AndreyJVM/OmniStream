@@ -1,0 +1,2 @@
+spring.lifecycle.timeout-per-shutdown-phase: 45s
+server.forward-headers-strategy: none

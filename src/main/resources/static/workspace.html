@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#16261e" />
+    <title>Omnistream · Operations console</title>
+    <link rel="icon" href="/mark.svg" />
+    <link rel="stylesheet" href="/console.css" />
+    <link rel="stylesheet" href="/ai-workspace.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <a href="/" class="brand" aria-label="Omnistream home"
+          ><img alt="" src="/mark.svg" /><span>Omnistream</span></a
+        >
+        <div class="workspace">
+          <span class="ws-icon">O</span>
+          <div><strong>Operations</strong><small>Workspace</small></div>
+        </div>
+        <nav aria-label="Main navigation">
+          <a href="#overview" data-nav="overview"
+            ><i data-icon="grid"></i>Overview</a
+          ><a href="#stream" data-nav="stream"
+            ><i data-icon="layers"></i>Event stream</a
+          >
+          <a href="#help" data-nav="help"><i data-icon="book"></i>Help</a>
+          <a href="#ai" data-nav="ai"><i data-icon="activity"></i>AI workspace</a>
+        </nav>
+        <div class="aside-bottom">
+          <a id="docs" href="/swagger-ui.html" target="_blank" rel="noopener"
+            ><i data-icon="book"></i>API reference<i data-icon="external"></i
+          ></a>
+          <div class="product">
+            <span class="pulse"></span>omnistream-ai <span>v1.0</span>
+          </div>
+        </div>
+      </aside>
+      <main>
+        <header>
+          <div class="crumb">
+            <i data-icon="panel"></i><span>Workspace</span><b>/</b
+            ><strong id="crumb">Overview</strong>
+          </div>
+          <button id="connection" class="mode">
+            <span class="dot"></span><span id="modeName">Sample workspace</span
+            ><i data-icon="chevron"></i>
+          </button>
+        </header>
+        <section class="content">
+          <div id="notice" role="status" hidden></div>
+          <section id="overview" aria-label="Overview">
+            <div class="hero">
+              <canvas aria-hidden="true" id="wave"></canvas>
+              <div class="hero-text">
+                <div class="hero-label">
+                  <span class="signal"></span>INGESTION ENGINE
+                </div>
+                <h1>Pipeline overview</h1>
+                <p>Your event pipeline, from intake to analysis.</p>
+                <button class="accent ingest">
+                  <i data-icon="plus"></i>Ingest event
+                </button>
+              </div>
+            </div>
+            <div class="section-title">
+              <h2>At a glance</h2>
+              <span class="window"
+                ><i data-icon="clock"></i>Latest
+                <span id="scope">0</span> events</span
+              >
+            </div>
+            <div id="stats" class="stats"></div>
+            <div class="plots">
+              <article class="card">
+                <div class="card-head">
+                  <div>
+                    <span class="micro">THROUGHPUT</span>
+                    <h2>Ingestion activity</h2>
+                  </div>
+                  <select id="period" aria-label="Activity time range">
+                    <option value="60">Last hour</option>
+                    <option value="1440">Last 24 hours</option>
+                  </select>
+                </div>
+                <div id="chart"></div>
+              </article>
+              <article class="card mix">
+                <div class="card-head">
+                  <div>
+                    <span class="micro">ANALYSIS</span>
+                    <h2>Category mix</h2>
+                  </div>
+                  <i data-icon="split"></i>
+                </div>
+                <div id="categories"></div>
+              </article>
+            </div>
+          </section>
+<section id="aiStudio" class="ai-studio" aria-labelledby="aiTitle" hidden>
+  <div class="studio-heading"><div><span class="studio-eyebrow">PAYLOAD → STRUCTURED DATA</span><h1 id="aiTitle">See the signal in your data.</h1><p>Send a document or webhook and follow its analysis from intake to result.</p></div><span id="studioProvider" class="provider-tag">Connect to analyze</span></div>
+  <div class="studio-layout">
+    <form id="studioForm" class="studio-input">
+      <div class="studio-card-title"><h2>Input</h2><span>Text or webhook JSON</span></div>
+      <div class="example-options" aria-label="Load an example"><button type="button" data-studio-example="invoice">Invoice</button><button type="button" data-studio-example="incident">Incident report</button><button type="button" data-studio-example="telemetry">Sensor alert</button></div>
+      <label class="studio-label" for="studioPayload">Payload</label><textarea id="studioPayload" maxlength="65536" required placeholder="Paste the text you want to understand…"></textarea>
+      <div class="payload-tools"><label class="file-control">Load a text file<input id="studioFile" type="file" accept=".txt,.md,.log,.json,.csv,text/plain"></label><span id="studioCount">0 / 65,536</span></div>
+      <div class="studio-fields"><label>Source ID<input id="studioSource" value="portfolio-demo" maxlength="100" required></label><label>Event type<input id="studioType" value="document.received" maxlength="100" required></label></div>
+      <div id="studioError" class="studio-error" role="alert" hidden></div>
+      <button id="analyzeButton" class="accent studio-submit" type="submit">Analyze payload <span aria-hidden="true">↗</span></button>
+      <p class="studio-footnote">The active parser receives your payload. Results are saved to your workspace.</p>
+    </form>
+    <section class="studio-output" aria-label="Analysis output">
+      <div class="studio-card-title"><h2>Analysis</h2><span id="studioTiming">Ready when you are</span></div>
+      <ol class="analysis-pipeline" aria-label="Processing stages"><li id="stageReceived"><span class="stage-mark">✓</span><div><strong>Ingestion</strong><small>Persist the event</small></div></li><li id="stageAnalysis"><span class="stage-mark">✦</span><div><strong>AI analysis</strong><small>Extract structured fields</small></div></li><li id="stageSaved"><span class="stage-mark">✓</span><div><strong>Saved</strong><small>Inspect the result</small></div></li></ol>
+      <div id="studioStatus" class="studio-status" role="status" aria-live="polite">Choose an example or add your own text to begin.</div>
+      <div id="analysisWaiting" class="analysis-empty"><span class="analysis-orb" aria-hidden="true">✦</span><h3>Make the unstructured useful.</h3><p>Your summary, category, risk level, and extracted entities will appear here.</p></div>
+      <div id="analysisLoading" class="analysis-loading" aria-hidden="true" hidden><div class="skeleton-line wide"></div><div class="skeleton-line"></div><div class="skeleton-tags"><span></span><span></span><span></span></div><div class="skeleton-box"></div></div>
+      <div id="analysisResult" hidden><div id="analysisTags" class="analysis-tags"></div><h3 class="result-label">SUMMARY</h3><p id="analysisSummary" class="analysis-summary"></p><div class="sentiment-row"><span>Sentiment</span><strong id="analysisSentiment"></strong></div><h3 class="result-label">EXTRACTED ENTITIES</h3><dl id="analysisEntities" class="entities-grid"></dl><details class="result-json"><summary>Structured JSON</summary><pre id="analysisJson"></pre></details></div>
+      <div class="studio-result-footer"><code id="studioEventId"></code><button id="studioInspect" class="secondary" type="button" hidden>Inspect event ↗</button><button id="studioCheck" class="secondary" type="button" hidden>Check status</button></div>
+    </section>
+  </div>
+</section>
+          <section id="feed">
+            <div class="section-title">
+              <div>
+                <h2 id="feedTitle">Recent events</h2>
+                <p id="feedSubtitle" hidden>
+                  The latest 100 events in this workspace.
+                </p>
+              </div>
+              <a href="#stream" id="viewAll"
+                >View stream <i data-icon="arrow"></i></a
+              ><button class="accent ingest" id="streamIngest" hidden>
+                <i data-icon="plus"></i>Ingest event
+              </button>
+            </div>
+            <div class="filters" id="filters" hidden>
+              <label
+                ><i data-icon="search"></i
+                ><input
+                  id="search"
+                  placeholder="Search source, type or ID"
+                  aria-label="Search events" /></label
+              ><select id="status" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                <option>RECEIVED</option>
+                <option>PROCESSING</option>
+                <option>COMPLETED</option>
+                <option>FAILED</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event type</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Received</th>
+                    <th aria-label="Inspect"></th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+              <div id="empty" hidden></div>
+            </div>
+          </section>
+          <section id="help" class="guide" aria-labelledby="helpTitle" hidden>
+            <div class="guide-intro">
+              <div><h1 id="helpTitle">How to use Omnistream</h1><p>Send an event, follow its progress, and inspect what the parser extracted.</p></div>
+              <a class="secondary" href="#stream">Open event stream</a>
+            </div>
+            <article class="card guide-example">
+              <div><h2>Try an invoice</h2><p>Open a prefilled event, edit any field, then select <strong>Submit event</strong>. You can also load a plain-text file.</p>
+              <button class="accent" id="tryInvoice"><i data-icon="plus"></i>Try example</button></div>
+              <dl><dt>Source ID</dt><dd><code>ledger-api</code></dd><dt>Event type</dt><dd><code>invoice.received</code></dd><dt>Raw payload</dt><dd id="examplePayload">Invoice INV-42 for USD 85.00 is overdue.</dd></dl>
+            </article>
+            <div class="guide-columns">
+              <article class="card"><h2>Follow an event</h2><p>Open <a href="#stream">Event stream</a> and select a row. The console refreshes every four seconds.</p>
+                <dl class="guide-list"><dt>Received</dt><dd>The event has been saved and is waiting for a worker.</dd><dt>Processing</dt><dd>The worker is analyzing the payload.</dd><dt>Completed</dt><dd>The analysis is available in the detail view.</dd><dt>Failed</dt><dd>Open the row to see its error. The worker exhausted its retries.</dd></dl>
+              </article>
+              <article class="card"><h2>Read the analysis</h2><dl class="guide-list"><dt>Summary and category</dt><dd>A short description and classification of the original payload.</dd><dt>Risk and sentiment</dt><dd>Risk ranges from low to critical. Sentiment ranges from −1 to +1.</dd><dt>Extracted entities</dt><dd>Look for facts such as the invoice ID, amount, and currency. Compare them with the raw payload.</dd></dl></article>
+            </div>
+            <article class="card"><h2>Workspace and startup</h2><p id="helpMode"></p>
+              <details><summary>How do I start and stop the Windows app?</summary><p>Double-click the Windows JAR and keep its launcher window open. Press <kbd>Q</kbd> in that window to stop. Your events stay in the <code>Omnistream-data</code> folder beside the JAR.</p></details>
+              <details><summary>How does Groq connect?</summary><p>The Windows launcher reads the server-side <code>GROQ_API_KEY</code> environment variable or a credential encrypted for your Windows account. With neither available, it starts the local rules parser. Restart the launcher after changing the credential.</p></details>
+              <details><summary>How do I send events from another app?</summary><p>Send JSON with <code>sourceId</code>, <code>eventType</code>, and <code>rawPayload</code> to <code>POST /api/v1/events/ingest</code>. Use your service’s <code>X-API-KEY</code> header. A <code>202</code> response contains the event ID. <a href="/swagger-ui.html" target="_blank" rel="noopener">Open API reference</a>.</p></details>
+            </article>
+          </section>
+          <footer>
+            <span
+              ><span class="dot"></span
+              ><span id="footerMode">Sample data</span></span
+            ><span>Omnistream / Operations</span>
+          </footer>
+        </section>
+      </main>
+    </div>
+    <dialog id="dialog">
+      <div class="dialog-head">
+        <h2 id="dialogTitle"></h2>
+        <button id="close" aria-label="Close dialog" class="icon-btn">
+          <i data-icon="x"></i>
+        </button>
+      </div>
+      <div id="dialogBody"></div>
+    </dialog>
+    <script src="/console.js" defer></script>
+    <script src="/ai-workspace.js" defer></script>
+  </body>
+</html>

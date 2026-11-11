@@ -1,0 +1,9 @@
+[build]
+  command = "node deploy/build-web.mjs"
+  publish = "dist"
+
+[[redirects]]
+  from = "/workspace"
+  to = "/workspace.html"
+  status = 200
+  force = true

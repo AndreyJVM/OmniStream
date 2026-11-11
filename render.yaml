@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: omnistream-ai
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: hosted
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: API_KEY
+        generateValue: true
