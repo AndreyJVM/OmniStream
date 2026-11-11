@@ -15,13 +15,18 @@ import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 @Profile("!hosted")
 @Configuration
 public class KafkaConfig {
+    private static final int TOPIC_PARTITIONS = 3;
+    private static final int MAX_RETRIES = 3;
+    private static final long INITIAL_INTERVAL_MS = 250L;
+    private static final double BACKOFF_MULTIPLIER = 2.0;
+
     @Bean
     KafkaAdmin.NewTopics topics(@Value("${omnistream.replication-factor}") int replicas) {
         return new KafkaAdmin.NewTopics(topic(KafkaProducerService.RAW, replicas), topic(KafkaProducerService.DLQ, replicas));
     }
 
     private NewTopic topic(String name, int replicas) {
-        return TopicBuilder.name(name).partitions(3).replicas(replicas).build();
+        return TopicBuilder.name(name).partitions(TOPIC_PARTITIONS).replicas(replicas).build();
     }
 
     @Bean(destroyMethod = "close")
@@ -31,9 +36,9 @@ public class KafkaConfig {
 
     @Bean
     DefaultErrorHandler kafkaErrorHandler(DeadLetterRecovery recovery) {
-        var delay = new ExponentialBackOffWithMaxRetries(3);
-        delay.setInitialInterval(250);
-        delay.setMultiplier(2.0);
+        var delay = new ExponentialBackOffWithMaxRetries(MAX_RETRIES);
+        delay.setInitialInterval(INITIAL_INTERVAL_MS);
+        delay.setMultiplier(BACKOFF_MULTIPLIER);
         var handler = new DefaultErrorHandler(recovery::recover, delay);
         handler.setCommitRecovered(true);
         return handler;
