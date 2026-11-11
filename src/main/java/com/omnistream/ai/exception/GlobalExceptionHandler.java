@@ -20,6 +20,11 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ProblemDetail status(org.springframework.web.server.ResponseStatusException ex) {
+        return ProblemDetail.forStatusAndDetail(ex.getStatusCode(), ex.getReason());
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ProblemDetail unavailable(DataAccessException ex) {
         log.error("Database operation failed: {}", ex.getClass().getSimpleName());

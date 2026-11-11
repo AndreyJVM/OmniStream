@@ -25,11 +25,19 @@ public class LLMAgenticParser implements AnalysisPort {
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     private final URI endpoint;
+    private final java.util.function.BiConsumer<String,Integer> requestBudget;
 
     private final Map<String,Object> generationOptions;
 
     LLMAgenticParser(String key, String model, ObjectMapper json, URI endpoint,
                      Map<String,Object> generationOptions) throws IOException {
+        this(key, model, json, endpoint, generationOptions, (body, tokens) -> {});
+    }
+
+    LLMAgenticParser(String key, String model, ObjectMapper json, URI endpoint,
+                     Map<String,Object> generationOptions,
+                     java.util.function.BiConsumer<String,Integer> requestBudget) throws IOException {
+        this.requestBudget = requestBudget;
         this.endpoint = endpoint;
         this.generationOptions = Map.copyOf(generationOptions);
         this.key = key;
@@ -51,10 +59,12 @@ public class LLMAgenticParser implements AnalysisPort {
             body.put("model", model);
             body.put("messages", messages);
             body.put("response_format", format);
+            String requestBody = json.writeValueAsString(body);
+            requestBudget.accept(requestBody, ((Number) generationOptions.get("max_completion_tokens")).intValue());
             var request = HttpRequest.newBuilder(endpoint)
                 .timeout(Duration.ofSeconds(25)).header("Authorization", "Bearer " + key)
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build();
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody)).build();
             var response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 throw new ProcessingException("Analysis provider returned HTTP " + response.statusCode());

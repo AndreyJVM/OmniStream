@@ -127,7 +127,7 @@
           refresh();
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, publicWorkspace ? 2000 : 1000));
       }
     } catch (failure) {
       stopTimer();

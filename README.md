@@ -1,5 +1,15 @@
 # OmniStream AI
 
+**[Open the live demo](https://omnistream-ai.onrender.com/)** · [AI workspace](https://omnistream-ai.onrender.com/workspace#ai) · [API reference](https://omnistream-ai.onrender.com/swagger-ui.html) · [CI status](https://github.com/SalarAmir/OmniStream/actions)
+
+[Product](#what-you-can-do) · [AI output](#what-ai-extracts) · [Architecture](#architecture) · [Demo limits and privacy](#demo-limits-and-privacy) · [CI/CD](#cicd) · [Run locally](#run-locally) · [Deployment](#deploy-the-complete-web-app)
+
+The free Render service may need about a minute to wake after idle time.
+
+![OmniStream landing page](docs/screenshots/landing.png)
+
+![AI workspace analyzing a synthetic incident report](docs/screenshots/ai-workspace.png)
+
 **Turn webhooks and document text into structured, inspectable intelligence.**
 
 OmniStream is an asynchronous ingestion engine with a browser workspace for watching AI turn raw input into a summary, category, risk assessment, sentiment score, and actionable entities. Every submission receives an event ID and a persistent processing state, so you can follow it from intake to the saved result.
@@ -44,7 +54,7 @@ For example, an overdue invoice can yield its invoice ID, amount, currency, and 
 | Mode | Behavior |
 | --- | --- |
 | `groq` | Default. Groq Cloud with `openai/gpt-oss-120b` |
-| `openai` | Optional OpenAI adapter with a configurable model |
+| `openai` | Optional OpenAI adapter with a configurable model in private mode |
 | `local` | Deterministic keyword and labeled-field extraction for offline demonstrations |
 
 The Groq adapter requests strict JSON Schema output using medium reasoning effort, a 2,048-token completion budget, and a non-streaming response. It validates the returned data before saving it. Provider errors, incomplete responses, and invalid results enter the retry path.
@@ -168,13 +178,35 @@ The included `render.yaml` configures a Free Render web service. A Neon PostgreS
 2. In Render, choose **New → Blueprint** and connect this repository.
 3. Supply `DB_URL`, `DB_USER`, `DB_PASSWORD`, and `GROQ_API_KEY`. Use a JDBC URL such as `jdbc:postgresql://HOST/DATABASE?sslmode=require`.
 4. Deploy. Render generates an administrative `API_KEY` and activates the `hosted` profile.
-5. Open the public URL and enter the workspace. Visitors can submit events and use the existing server-side Groq configuration immediately.
+5. Open the public URL and enter the workspace. Visitors receive a private browser session and can submit within the public demo quotas using the server-side Groq configuration.
 
-Flyway creates the schema at startup. The deployed application serves both the landing page and workspace. The hosted portfolio workspace is public and shared across visitors. `PUBLIC_WORKSPACE=false` restores API-key authentication for events. Metrics always require the administrative service key. Supply `GROQ_API_KEY` once in the server environment; the browser receives no provider credential.
+Flyway creates the schema at startup. The deployed application serves both the landing page and workspace. The hosted portfolio is publicly accessible, with each visitor’s events scoped to their opaque browser session. Historical unowned records remain administrator-only. `PUBLIC_WORKSPACE=false` restores API-key authentication for events. Metrics always require the administrative service key. Supply `GROQ_API_KEY` once in the server environment; the browser receives no provider credential.
 
 Netlify and Vercel configuration files also support a static sample preview. Setting `WORKSPACE_ORIGIN` during that frontend build links it to a live backend. Full ingestion, provider calls, and persistence require the backend deployment.
 
 Free hosting is subject to provider quotas and idle suspension. The optional Heroku manifest provisions paid resources. Check the selected provider’s current plan before deploying.
+
+## Demo limits and privacy
+
+| Protection | Public demo default |
+| --- | --- |
+| Visitor submissions | 3 per UTC day |
+| Peer IP submissions | 10 per UTC day |
+| Global submissions | 20 per UTC day |
+| Visitor HTTP requests | 60 per minute |
+| Payload | Up to 2,000 characters, no metadata |
+| Retention | Visitor events deleted after 24 hours by a five-minute cleanup task |
+| AI budget | At most $1.00 of conservative reservations per UTC day, including retries |
+
+Visitor ownership comes from a random 256-bit HttpOnly, SameSite=Strict cookie. The database stores an HMAC of the token. Changing the URL or guessing an event ID does not grant access to another visitor’s records. Old unowned events and administrator submissions are excluded from visitor feeds. Clearing cookies loses access to that session’s events. Administrators retain API-key access for operations.
+
+Submission quotas and AI budget counters are transactional PostgreSQL records shared across instances and restarts. New cookies cannot bypass the peer-IP or global quota. The peer address is the socket address; visitors behind a proxy may share that additional quota.
+
+Before each real provider attempt, the application reserves a conservative upper estimate based on serialized request UTF-8 bytes, a framing allowance, the completion-token bound, and a default price ceiling of $5 per million tokens. Failed calls and retries keep their reservations. Reservations commit independently of processing rollbacks. When the remaining budget is insufficient, the provider request is blocked. The public cloud mode is restricted to the configured Groq GPT-OSS 120B model.
+
+The application enforces this bound under the configured token-price ceiling. Provider-side spend limits add an independent billing control. Changing model prices requires reviewing the ceiling. Other uses of the same provider key are outside this application’s counters. Set `DEMO_DAILY_BUDGET_USD` to lower the cap, including zero to disable cloud calls, and `DEMO_MAX_TOKEN_USD_PER_MILLION` to change the conservative ceiling.
+
+Avoid submitting secrets or personal information. The active provider receives submitted text. Automatic deletion runs while the service is awake and resumes after idle suspension. Hosted mode uses PostgreSQL only; demo cleanup does not remove messages retained in a separately deployed Kafka broker.
 
 ## Configuration
 
@@ -184,7 +216,9 @@ Free hosting is subject to provider quotas and idle suspension. The optional Her
 | `DB_URL` | PostgreSQL JDBC URL |
 | `DB_USER`, `DB_PASSWORD` | Database credentials |
 | `API_KEY` | Administrative metrics key and private-mode event authentication |
-| `PUBLIC_WORKSPACE` | Defaults to `true` in the hosted profile. Set `false` for private event access |
+| `PUBLIC_WORKSPACE` | Defaults to `true` in hosted mode with visitor isolation. Set `false` for API-key-only access |
+| `DEMO_DAILY_BUDGET_USD` | Daily application AI reservation budget, default 1.00 |
+| `DEMO_MAX_TOKEN_USD_PER_MILLION` | Conservative maximum token price for budget reservations, default 5.00 |
 | `PARSER_MODE` | `groq`, `openai`, or `local` |
 | `GROQ_API_KEY`, `GROQ_MODEL` | Groq credential and model |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | Optional OpenAI credential and model |
@@ -219,7 +253,7 @@ Example request body:
 
 A successful intake response contains `eventId`, `status`, and `timestamp`. Its `Location` header points to the event.
 
-Payloads support up to 65,536 characters. Metadata supports up to 32 string key/value pairs. Overview counts and charts cover the latest 100 events. The console refreshes its feed every four seconds and polls an active AI analysis every second.
+Payloads support up to 65,536 characters. Metadata supports up to 32 string key/value pairs. Overview counts and charts cover the latest 100 events. The console refreshes its feed every four seconds and polls an active AI analysis every two seconds in the public demo and every second in private mode.
 
 ## Health and diagnostics
 

@@ -4,3 +4,5 @@ spring:
 management.endpoint.health.group.readiness.include: readinessState,db
 omnistream.relay-delay-ms: 500
 omnistream.public-workspace: ${PUBLIC_WORKSPACE:true}
+omnistream.demo.daily-budget-usd: ${DEMO_DAILY_BUDGET_USD:1.00}
+omnistream.demo.max-token-usd-per-million: ${DEMO_MAX_TOKEN_USD_PER_MILLION:5.00}

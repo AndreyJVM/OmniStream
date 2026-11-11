@@ -67,6 +67,25 @@ class LLMAgenticParserTest {
         assertThat(request.at("/messages/1/content").asText()).contains(event.rawPayload());
     }
 
+    @Test void reservesBudgetBeforeProviderFailure() throws Exception {
+        var reservations = new java.util.concurrent.atomic.AtomicInteger();
+        parser = ParserConfiguration.groqParser("test-key", "openai/gpt-oss-120b", json,
+            URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/parse"),
+            (body, tokens) -> reservations.incrementAndGet());
+        reply(429, "provider failed", "stop");
+        assertThatThrownBy(() -> parser.parse(event)).isInstanceOf(ProcessingException.class);
+        assertThat(reservations.get()).isEqualTo(1);
+    }
+
+    @Test void exhaustedBudgetPreventsNetworkRequest() throws Exception {
+        parser = ParserConfiguration.groqParser("test-key", "openai/gpt-oss-120b", json,
+            URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/parse"),
+            (body, tokens) -> { throw new IllegalStateException("Budget exhausted"); });
+        reply(200, "{}", "stop");
+        assertThatThrownBy(() -> parser.parse(event)).hasMessage("Budget exhausted");
+        assertThat(captured.get()).isNull();
+    }
+
     @Test void rejectsTruncation() throws Exception {
         reply(200,"{}","length");
         assertThatThrownBy(() -> parser.parse(event)).isInstanceOf(ProcessingException.class);

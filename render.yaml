@@ -6,6 +6,10 @@ services:
     autoDeployTrigger: checksPass
     healthCheckPath: /actuator/health/readiness
     envVars:
+      - key: DEMO_DAILY_BUDGET_USD
+        value: "1.00"
+      - key: DEMO_MAX_TOKEN_USD_PER_MILLION
+        value: "5.00"
       - key: SPRING_PROFILES_ACTIVE
         value: hosted
       - key: DB_URL

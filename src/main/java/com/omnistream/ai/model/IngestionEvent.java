@@ -16,6 +16,7 @@ import java.util.UUID;
 public class IngestionEvent {
     @Id private UUID id;
     private String sourceId;
+    private String demoOwner;
     private String eventType;
     @Column(columnDefinition = "text") private String rawPayload;
     @JdbcTypeCode(SqlTypes.JSON) private Map<String,String> metadata;
@@ -60,6 +61,7 @@ public class IngestionEvent {
         updatedAt = Instant.now();
     }
 
+    public void setDemoOwner(String owner) { demoOwner = owner; }
     public UUID getId() { return id; }
     public String getSourceId() { return sourceId; }
     public String getEventType() { return eventType; }

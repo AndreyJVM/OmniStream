@@ -18,6 +18,15 @@ public interface IngestionEventRepository extends JpaRepository<IngestionEvent, 
         """)
     List<EventSummary> recent(Pageable page);
 
+    Optional<IngestionEvent> findByIdAndDemoOwner(UUID id, String demoOwner);
+
+    @Query("""
+        select new com.omnistream.ai.dto.response.EventSummary(
+            e.id,e.sourceId,e.eventType,e.status,e.category,e.createdAt,e.updatedAt)
+        from IngestionEvent e where e.demoOwner = :owner order by e.createdAt desc, e.id desc
+        """)
+    List<EventSummary> recentForOwner(@Param("owner") String owner, Pageable page);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from IngestionEvent e where e.id = :id")
     Optional<IngestionEvent> lock(@Param("id") UUID id);

@@ -622,6 +622,13 @@ async function connectLoopback() {
   try {
     const config = await fetch("/workspace-config", {signal: AbortSignal.timeout(5000)});
     if (config.ok) publicWorkspace = (await config.json()).publicWorkspace === true;
+    if (publicWorkspace) {
+      const message = document.createElement("p");
+      message.className = "demo-policy-note";
+      message.textContent = "Private visitor session · 3 analyses per UTC day · Events expire after 24 hours. Use examples and avoid sensitive information.";
+      $("studioForm").prepend(message);
+      $("studioPayload").maxLength = 2000;
+    }
   } catch {}
   if (!isLoopback && !publicWorkspace) return;
   try {

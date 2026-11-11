@@ -18,13 +18,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
+import com.omnistream.ai.service.DemoPolicy;
+import java.time.Duration;
 
 @Configuration
 public class SecurityConfig {
     @Bean
     SecurityFilterChain chain(HttpSecurity http, @Value("${omnistream.api-key}") String key,
                               Cache<String, RateLimiter> limits, RateLimiterConfig rate,
-                              @Value("${omnistream.public-workspace:false}") boolean publicWorkspace) throws Exception {
+                              @Value("${omnistream.public-workspace:false}") boolean publicWorkspace, DemoPolicy demo) throws Exception {
         if (key.isBlank()) throw new IllegalArgumentException("API_KEY is required");
         byte[] expected = key.getBytes(StandardCharsets.UTF_8);
         var filter = new OncePerRequestFilter() {
@@ -41,9 +43,25 @@ public class SecurityConfig {
                     }
                     String provided = req.getHeader("X-API-KEY");
                     boolean publicEvent = publicWorkspace && (path.equals("/api/v1/events") || path.startsWith("/api/v1/events/"));
-                    if (!publicEvent && (provided == null || !MessageDigest.isEqual(expected, provided.getBytes(StandardCharsets.UTF_8)))) {
+                    boolean administrator = provided != null && MessageDigest.isEqual(expected, provided.getBytes(StandardCharsets.UTF_8));
+                    if (!publicEvent && !administrator) {
                         problem(res, 401, "A valid X-API-KEY is required");
                         return;
+                    }
+                    if (publicEvent && !administrator) {
+                        if ("cross-site".equals(req.getHeader("Sec-Fetch-Site"))) {
+                            problem(res, 403, "Use the demo from its own website");
+                            return;
+                        }
+                        demo.identify(req, res);
+                        var readLimit = limits.get("demo:" + req.getAttribute(DemoPolicy.OWNER), ignored ->
+                            RateLimiter.of("demo", RateLimiterConfig.custom().limitForPeriod(60)
+                                .limitRefreshPeriod(Duration.ofMinutes(1)).timeoutDuration(Duration.ZERO).build()));
+                        if (!readLimit.acquirePermission()) {
+                            res.setHeader("Retry-After", "60");
+                            problem(res, 429, "Demo request quota reached");
+                            return;
+                        }
                     }
                     var token = UsernamePasswordAuthenticationToken.authenticated("api-client", null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(token);
