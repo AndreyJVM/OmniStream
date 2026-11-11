@@ -140,6 +140,7 @@ const samples = Array.from({ length: 48 }, (_, i) => {
 let events = samples,
   key = "",
   parser = "",
+  publicWorkspace = false,
   parserModel = "",
   activeId = null,
   nextAction = null,
@@ -248,7 +249,7 @@ function render() {
     )
     .join("");
   renderRows();
-  $("modeName").textContent = key ? "Connected API" : "Sample workspace";
+  $("modeName").textContent = publicWorkspace ? "Live workspace" : key ? "Connected API" : "Sample workspace";
   $("connection").classList.toggle("live", !!key);
   $("footerMode").textContent = key
     ? "Connected · " +
@@ -580,8 +581,8 @@ async function intake(example = false) {
 }
 $("connection").onclick = async () => {
   await initialConnection;
-  if (isLoopback && key === localServiceKey) {
-    modal("Local workspace", "<p>Connected to the local service. Active parser: " +
+  if (publicWorkspace || (isLoopback && key === localServiceKey)) {
+    modal(publicWorkspace ? "Live workspace" : "Local workspace", "<p>Connected to the service. Active parser: " +
       esc(providerNames[parser] || parser) + ".</p>");
   } else connect();
 };
@@ -617,10 +618,15 @@ setInterval(() => {
   if (!document.hidden && key) refresh();
 }, 4000);
 async function connectLoopback() {
-  if (previewOnly || !isLoopback) return;
+  if (previewOnly) return;
   try {
-    const feed = await api("/api/v1/events", {signal: AbortSignal.timeout(5000)}, localServiceKey);
-    key = localServiceKey;
+    const config = await fetch("/workspace-config", {signal: AbortSignal.timeout(5000)});
+    if (config.ok) publicWorkspace = (await config.json()).publicWorkspace === true;
+  } catch {}
+  if (!isLoopback && !publicWorkspace) return;
+  try {
+    const feed = await api("/api/v1/events", {signal: AbortSignal.timeout(5000)}, publicWorkspace ? "public-workspace" : localServiceKey);
+    key = publicWorkspace ? "public-workspace" : localServiceKey;
     events = feed.events;
     parser = feed.parserMode;
     parserModel = feed.parserModel || "";

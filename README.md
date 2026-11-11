@@ -20,7 +20,7 @@ Built with Java 21, Spring Boot, PostgreSQL, Apache Kafka, and Groq Cloud.
 ## A typical workflow
 
 1. Open the landing page and enter the workspace.
-2. Connect with the deployment’s service API key. The Windows app connects automatically with its local development key.
+2. The hosted portfolio workspace connects automatically. The Windows app uses its local connection. Private deployments can require a service API key.
 3. Open **AI workspace**, choose an example, or paste your own text.
 4. Select **Analyze payload**. Intake saves the event before analysis begins.
 5. Follow its progress and inspect the completed result. The event remains available in **Event stream**.
@@ -90,6 +90,24 @@ The `hosted` profile consumes the durable PostgreSQL outbox directly. Workers cl
 
 Use one queue mode per database. Delivery is at least once. A crash between a provider call and the result commit can repeat the provider call. Each new HTTP submission receives a new UUID.
 
+## CI/CD
+
+GitHub Actions runs on pushes to `main`, pull requests, and manual dispatch. The pipeline installs Java 21, checks browser JavaScript syntax, runs `mvn verify` with real PostgreSQL and Kafka Testcontainers, builds the static preview, and uploads the executable JAR and test reports.
+
+The Render Blueprint sets `autoDeployTrigger: checksPass`. With the repository connected to Render through GitHub, a passing CI run allows Render to build the Docker image, apply Flyway migrations, and check application readiness. Failed checks stop automatic deployment. This configuration takes effect when the Blueprint is synchronized; a repository commit alone does not create a Render service.
+
+## Kafka and hosted-mode tradeoffs
+
+| Concern | Kafka mode | Hosted PostgreSQL mode |
+| --- | --- | --- |
+| Queue transport | Three-partition Kafka topic and consumer group | Database outbox with leased rows |
+| Scaling | Consumers can distribute work across partitions | Workers compete for due rows using row locks |
+| Failed work | Dead-letter topic plus persisted failed event | Persisted failed event after retry exhaustion |
+| Infrastructure | App, PostgreSQL, and Kafka | App and PostgreSQL |
+| Best fit | Demonstrating distributed messaging and broker recovery | A compact portfolio deployment on a free web host |
+
+Both modes save intake durably and process asynchronously. Hosted mode trades Kafka's partitioned log and broker-based distribution for fewer services, while queue polling and analysis consume database connections. Kafka remains fully implemented and exercised in CI. The hosted demo uses PostgreSQL queuing. Both provide at-least-once processing, so a crash can repeat an AI request.
+
 ## Technical stack
 
 | Component | Implementation |
@@ -149,10 +167,10 @@ The included `render.yaml` configures a Free Render web service. A Neon PostgreS
 1. Create a Neon database and collect its hostname, database name, user, and password.
 2. In Render, choose **New → Blueprint** and connect this repository.
 3. Supply `DB_URL`, `DB_USER`, `DB_PASSWORD`, and `GROQ_API_KEY`. Use a JDBC URL such as `jdbc:postgresql://HOST/DATABASE?sslmode=require`.
-4. Deploy. Render generates the service `API_KEY` and activates the `hosted` profile.
-5. Open the public URL, enter the workspace, and connect with the generated service key.
+4. Deploy. Render generates an administrative `API_KEY` and activates the `hosted` profile.
+5. Open the public URL and enter the workspace. Visitors can submit events and use the existing server-side Groq configuration immediately.
 
-Flyway creates the schema at startup. The deployed application serves both the landing page and workspace. The service key grants access to the shared event workspace.
+Flyway creates the schema at startup. The deployed application serves both the landing page and workspace. The hosted portfolio workspace is public and shared across visitors. `PUBLIC_WORKSPACE=false` restores API-key authentication for events. Metrics always require the administrative service key. Supply `GROQ_API_KEY` once in the server environment; the browser receives no provider credential.
 
 Netlify and Vercel configuration files also support a static sample preview. Setting `WORKSPACE_ORIGIN` during that frontend build links it to a live backend. Full ingestion, provider calls, and persistence require the backend deployment.
 
@@ -165,7 +183,8 @@ Free hosting is subject to provider quotas and idle suspension. The optional Her
 | `SPRING_PROFILES_ACTIVE` | `hosted` for PostgreSQL queuing, `dev` for local Kafka, or `prod` for configured Kafka deployments |
 | `DB_URL` | PostgreSQL JDBC URL |
 | `DB_USER`, `DB_PASSWORD` | Database credentials |
-| `API_KEY` | Service authentication secret |
+| `API_KEY` | Administrative metrics key and private-mode event authentication |
+| `PUBLIC_WORKSPACE` | Defaults to `true` in the hosted profile. Set `false` for private event access |
 | `PARSER_MODE` | `groq`, `openai`, or `local` |
 | `GROQ_API_KEY`, `GROQ_MODEL` | Groq credential and model |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | Optional OpenAI credential and model |
@@ -177,7 +196,7 @@ Free hosting is subject to provider quotas and idle suspension. The optional Her
 
 ## API
 
-All event endpoints require `X-API-KEY`.
+Event endpoints are available without a key in the hosted public portfolio. Private mode requires `X-API-KEY`.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |

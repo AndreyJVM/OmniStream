@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: Java and integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Check browser JavaScript
+        run: |
+          node --check src/main/resources/static/console.js
+          node --check src/main/resources/static/ai-workspace.js
+          node --check src/main/resources/static/landing.js
+      - name: Verify application with PostgreSQL and Kafka containers
+        run: mvn --batch-mode --no-transfer-progress verify
+      - name: Build static preview
+        run: node deploy/build-web.mjs
+      - name: Upload executable JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnistream-ai
+          path: target/omnistream-ai.jar
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/

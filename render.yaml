@@ -3,6 +3,7 @@ services:
     name: omnistream-ai
     runtime: docker
     plan: free
+    autoDeployTrigger: checksPass
     healthCheckPath: /actuator/health/readiness
     envVars:
       - key: SPRING_PROFILES_ACTIVE

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 @Testcontainers
 @ActiveProfiles("hosted")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "omnistream.api-key=hosted-test", "omnistream.parser-mode=local", "omnistream.relay-delay-ms=50"
+    "omnistream.public-workspace=false", "omnistream.api-key=hosted-test", "omnistream.parser-mode=local", "omnistream.relay-delay-ms=50"
 })
 class HostedQueueIntegrationTest {
     @Container static final PostgreSQLContainer<?> DB = new PostgreSQLContainer<>("postgres:16-alpine");

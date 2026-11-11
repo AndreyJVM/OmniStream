@@ -23,7 +23,8 @@ import java.util.List;
 public class SecurityConfig {
     @Bean
     SecurityFilterChain chain(HttpSecurity http, @Value("${omnistream.api-key}") String key,
-                              Cache<String, RateLimiter> limits, RateLimiterConfig rate) throws Exception {
+                              Cache<String, RateLimiter> limits, RateLimiterConfig rate,
+                              @Value("${omnistream.public-workspace:false}") boolean publicWorkspace) throws Exception {
         if (key.isBlank()) throw new IllegalArgumentException("API_KEY is required");
         byte[] expected = key.getBytes(StandardCharsets.UTF_8);
         var filter = new OncePerRequestFilter() {
@@ -39,7 +40,8 @@ public class SecurityConfig {
                         return;
                     }
                     String provided = req.getHeader("X-API-KEY");
-                    if (provided == null || !MessageDigest.isEqual(expected, provided.getBytes(StandardCharsets.UTF_8))) {
+                    boolean publicEvent = publicWorkspace && (path.equals("/api/v1/events") || path.startsWith("/api/v1/events/"));
+                    if (!publicEvent && (provided == null || !MessageDigest.isEqual(expected, provided.getBytes(StandardCharsets.UTF_8)))) {
                         problem(res, 401, "A valid X-API-KEY is required");
                         return;
                     }
@@ -52,7 +54,7 @@ public class SecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a.requestMatchers("/", "/index.html", "/landing.css", "/landing.js",
-                "/ai-workspace.js", "/ai-workspace.css",
+                "/workspace-config", "/ai-workspace.js", "/ai-workspace.css",
                 "/workspace", "/workspace/", "/workspace.html", "/console.css", "/console.js",
                 "/mark.svg", "/health", "/error", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**",
                 "/actuator/health", "/actuator/health/**").permitAll().anyRequest().authenticated())

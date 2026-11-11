@@ -3,3 +3,4 @@ spring:
   datasource.hikari.maximum-pool-size: 6
 management.endpoint.health.group.readiness.include: readinessState,db
 omnistream.relay-delay-ms: 500
+omnistream.public-workspace: ${PUBLIC_WORKSPACE:true}
